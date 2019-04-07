@@ -1,12 +1,16 @@
 const restify = require("restify");
 const mongoose = require("mongoose");
 const config = require("./config");
+const rjwt = require("restify-jwt-community");
 
 const server = restify.createServer();
 
 // Middleware
 // Restify
 server.use(restify.plugins.bodyParser());
+
+// Protecc unless it's the auth endpoint
+// server.use(rjwt({ secret: config.JWT_SECRET }).unless({ path: ["/auth"] }));
 
 server.listen(config.PORT, () => {
   // connect to mongoDB through mongoose

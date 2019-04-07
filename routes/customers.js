@@ -13,7 +13,47 @@ module.exports = server => {
       // with restify, you always need to call next() when finished with your route
       next();
     } catch (err) {
-      return next(new errors.invalidContentError(err));
+      return next(new errors.InvalidContentError(err));
+    }
+  });
+
+  // GET SINGLE CUSTOMER
+  server.get("/customers/:id", async (req, res, next) => {
+    try {
+      const customer = await Customer.findById(req.params.id);
+      res.send(customer);
+      next();
+    } catch (err) {
+      return next(
+        new errors.ResourceNotFoundError(
+          `There is no customer with the id of ${req.params.id}`
+        )
+      );
+    }
+  });
+
+  // ADD CUSTOMER
+  server.post("/customers", async (req, res, next) => {
+    // make sure the content type is application/json
+    if (!req.is("application/json")) {
+      return next(new errors.InvalidContentError("Expects 'application/json'"));
+    }
+
+    // create new customer
+    const { name, email, balance } = req.body;
+
+    const customer = new Customer({
+      name,
+      email,
+      balance
+    });
+
+    try {
+      const newCustomer = await customer.save();
+      res.send(201); //everything OK, asset was created
+      next();
+    } catch (err) {
+      return next(new errors.InternalError(err.message));
     }
   });
 };

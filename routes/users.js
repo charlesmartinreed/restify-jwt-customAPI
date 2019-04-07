@@ -1,6 +1,9 @@
 const errors = require("restify-errors");
 const User = require("../models/User");
+const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const auth = require("../auth");
+const config = require("../config");
 
 module.exports = server => {
   // REGISTER USER ROUTE
@@ -29,5 +32,30 @@ module.exports = server => {
         }
       });
     });
+  });
+
+  // AUTHENTICATE USER ROUTE
+  server.post("/auth", async (req, res, next) => {
+    const { email, password } = req.body;
+
+    try {
+      // attempt to authenticate the author
+      const user = await auth.authenticate(email, password);
+
+      // create a web token, pass it to the authenticated user
+      // pass in the JSONized data, the secret, expiration date
+      const token = jwt.sign(user.toJSON(), config.JWT_SECRET, {
+        expiresIn: "15m"
+      });
+
+      // respond with issued at, expiration and token from JWT
+      const { iat, exp } = jwt.decode(token);
+      res.send({ iat, exp, token });
+
+      next();
+    } catch (err) {
+      // user is not authorized
+      return next(new errors.UnauthorizedError(err));
+    }
   });
 };

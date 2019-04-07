@@ -56,4 +56,40 @@ module.exports = server => {
       return next(new errors.InternalError(err.message));
     }
   });
+
+  // UPDATE CUSTOMER
+  server.put("/customers/:id", async (req, res, next) => {
+    if (!req.is("application/json")) {
+      return next(new errors.InvalidContentError("Expects 'application/json'"));
+    }
+    try {
+      const customer = await Customer.findOneAndUpdate(
+        { _id: req.params.id },
+        req.body
+      );
+      res.send(200);
+      next();
+    } catch (err) {
+      return next(
+        new errors.ResourceNotFoundError(
+          `There is no customer with the id of ${req.params.id}`
+        )
+      );
+    }
+  });
+
+  // DELETE CUSTOMER
+  // notice that with restify, we use del NOT delete
+  server.del("/customers/:id", async (req, res, next) => {
+    try {
+      const customer = await Customer.findOneAndRemove({ _id: req.params.id });
+      res.send(204); // means something was successfully removed
+    } catch (err) {
+      return next(
+        new errors.ResourceNotFoundError(
+          `There is no customer with the id of ${req.params.id}`
+        )
+      );
+    }
+  });
 };
